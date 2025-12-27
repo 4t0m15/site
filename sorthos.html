@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sorthos - Sorting Algorithm Visualizer</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #1e1e1e;
+      }
+      #sorthos_canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Loading...</div>
+    <canvas id="sorthos_canvas"></canvas>
+    <script type="module">
+      import init from './sorthos/sorthos.js';
+      
+      async function run() {
+        try {
+          await init();
+          document.getElementById('loading').style.display = 'none';
+        } catch (e) {
+          console.error('Failed to load Sorthos:', e);
+          document.getElementById('loading').textContent = 'Error loading Sorthos. Check console for details.';
+        }
+      }
+      
+      run();
+    </script>
+  </body>
+</html>
+
