@@ -1,6 +1,7 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 #![allow(static_mut_refs)]
 
+#[cfg(not(target_arch = "wasm32"))]
 use crate::audio::audio_handler::get_audio_spectrum;
 use crate::graphics::render::draw_filled_circle;
 
@@ -271,16 +272,17 @@ fn draw_ball_with_effects(
     );
 
     // Get audio data for scaling - much more expressive scaling
-    let mut audio_scale = 1.0;
+    let mut audio_scale: f32 = 1.0;
+    #[cfg(not(target_arch = "wasm32"))]
     if let Some(spectrum) = get_audio_spectrum() {
         if let Ok(data) = spectrum.lock() {
             if !data.is_empty() {
                 // Use different frequency ranges for each ball - swapped frequency ranges
-                let audio_value = if is_yellow {
+                let audio_value: f32 = if is_yellow {
                     // Yellow ball responds to high frequencies (last quarter of spectrum)
                     let start = (data.len() * 3) / 4;
                     let end = data.len();
-                    let mut high_avg = 0.0;
+                    let mut high_avg: f32 = 0.0;
                     for i in start..end {
                         high_avg += data[i];
                     }
@@ -288,7 +290,7 @@ fn draw_ball_with_effects(
                 } else {
                     // Green ball responds to bass frequencies (first quarter of spectrum)
                     let bass_range = data.len() / 4;
-                    let mut bass_avg = 0.0;
+                    let mut bass_avg: f32 = 0.0;
                     for i in 0..bass_range {
                         bass_avg += data[i];
                     }

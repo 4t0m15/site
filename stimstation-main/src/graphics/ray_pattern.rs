@@ -1,7 +1,13 @@
 use crate::{algorithms::sorter_manager, core::orchestrator, integration, physics};
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn set_monitor_dimensions(monitor: &winit::monitor::MonitorHandle) {
     integration::set_monitor_dimensions(monitor);
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn set_monitor_dimensions_web(width: u32, height: u32) {
+    integration::set_monitor_dimensions_web(width, height);
 }
 
 pub fn draw_frame(

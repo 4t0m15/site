@@ -1,12 +1,18 @@
+#[cfg(not(target_arch = "wasm32"))]
 use crate::audio::audio_integration::AudioIntegration;
+#[cfg(not(target_arch = "wasm32"))]
 use crate::text::text_processor::TextProcessor;
+#[cfg(not(target_arch = "wasm32"))]
 use winit::monitor::MonitorHandle;
 
+#[cfg(not(target_arch = "wasm32"))]
 static mut AUDIO_INTEGRATION: Option<AudioIntegration> = None;
+#[cfg(not(target_arch = "wasm32"))]
 static mut TEXT_RENDERER: Option<TextProcessor> = None;
 static mut MONITOR_WIDTH: Option<u32> = None;
 static mut MONITOR_HEIGHT: Option<u32> = None;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn set_monitor_dimensions(monitor: &MonitorHandle) {
     let size = monitor.size();
     unsafe {
@@ -16,10 +22,19 @@ pub fn set_monitor_dimensions(monitor: &MonitorHandle) {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+pub fn set_monitor_dimensions_web(width: u32, height: u32) {
+    unsafe {
+        MONITOR_WIDTH = Some(width);
+        MONITOR_HEIGHT = Some(height);
+    }
+}
+
 pub fn get_monitor_dimensions() -> (Option<u32>, Option<u32>) {
     unsafe { (MONITOR_WIDTH, MONITOR_HEIGHT) }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn initialize_audio_integration() {
     unsafe {
         if AUDIO_INTEGRATION.is_none() {
@@ -31,6 +46,12 @@ pub fn initialize_audio_integration() {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+pub fn initialize_audio_integration() {
+    // Audio not supported in WASM
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn update_and_draw_audio(
     frame: &mut [u8],
     width: u32,
@@ -48,8 +69,25 @@ pub fn update_and_draw_audio(
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+pub fn update_and_draw_audio(
+    _frame: &mut [u8],
+    _width: u32,
+    _height: u32,
+    _time: f32,
+    _x_offset: usize,
+    _buffer_width: u32,
+) {
+    // Audio visualization not supported in WASM
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn initialize_text_renderer() {}
 
+#[cfg(target_arch = "wasm32")]
+pub fn initialize_text_renderer() {}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn update_and_draw_text(
     frame: &mut [u8],
     width: u32,
@@ -64,4 +102,16 @@ pub fn update_and_draw_text(
             text_renderer.draw(frame, width, height, x_offset, buffer_width);
         }
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn update_and_draw_text(
+    _frame: &mut [u8],
+    _width: u32,
+    _height: u32,
+    _time: f32,
+    _x_offset: usize,
+    _buffer_width: u32,
+) {
+    // Text rendering not supported in WASM
 }

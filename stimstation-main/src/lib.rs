@@ -1,16 +1,112 @@
 pub mod algorithms;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod audio;
 pub mod core;
 pub mod graphics;
 pub mod physics;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod text;
+
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::closure::Closure;
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(start)]
+pub fn main() {
+    console_error_panic_hook::set_once();
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub async fn run_app() -> Result<(), JsValue> {
+    use web_sys::window;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    
+    web_sys::console::log_1(&"Starting StimStation...".into());
+    
+    // For now, we'll use a simple canvas-based approach
+    // The full pixels integration requires more setup
+    let window = window().expect("no global window exists");
+    let document = window.document().expect("should have a document on window");
+    let canvas = document
+        .get_element_by_id("stimstation_canvas")
+        .expect("should have stimstation_canvas on the page")
+        .dyn_into::<web_sys::HtmlCanvasElement>()
+        .expect("stimstation_canvas should be an HtmlCanvasElement");
+    
+    // Set canvas size
+    canvas.set_width(types::WIDTH);
+    canvas.set_height(types::HEIGHT);
+    
+    let context = canvas
+        .get_context("2d")?
+        .expect("should have 2d context")
+        .dyn_into::<web_sys::CanvasRenderingContext2d>()?;
+    
+    // Create image data buffer
+    let frame = vec![0u8; (types::WIDTH * types::HEIGHT * 4) as usize];
+    
+    let start_time = window.performance().expect("should have performance").now();
+    
+    let f: Rc<RefCell<Option<Closure<dyn FnMut()>>>> = Rc::new(RefCell::new(None));
+    let g = f.clone();
+    
+    let context = Rc::new(context);
+    let frame = Rc::new(RefCell::new(frame));
+    
+    *g.borrow_mut() = Some(Closure::new(move || {
+        let window = web_sys::window().unwrap();
+        let current_time = window.performance().unwrap().now();
+        let elapsed = ((current_time - start_time) / 1000.0) as f32;
+        
+        // Draw frame
+        {
+            let mut frame_data = frame.borrow_mut();
+            orchestrator::draw_frame(
+                &mut frame_data,
+                types::WIDTH,
+                types::HEIGHT,
+                elapsed,
+                0,
+                types::WIDTH,
+            );
+            
+            // Convert to ImageData and draw
+            let clamped = wasm_bindgen::Clamped(&frame_data[..]);
+            if let Ok(image_data) = web_sys::ImageData::new_with_u8_clamped_array_and_sh(
+                clamped,
+                types::WIDTH,
+                types::HEIGHT,
+            ) {
+                let _ = context.put_image_data(&image_data, 0.0, 0.0);
+            }
+        }
+        
+        // Request next frame
+        let _ = window.request_animation_frame(
+            f.borrow().as_ref().unwrap().as_ref().unchecked_ref()
+        );
+    }));
+    
+    // Start the animation loop
+    let window = web_sys::window().unwrap();
+    let _ = window.request_animation_frame(
+        g.borrow().as_ref().unwrap().as_ref().unchecked_ref()
+    );
+    
+    Ok(())
+}
 
 // Re-export commonly used types and modules
 pub use core::integration;
 pub use core::orchestrator;
 pub use core::types;
 
-// App module - integrates with the orchestrator
+// App module - integrates with the orchestrator (native only)
+#[cfg(not(target_arch = "wasm32"))]
 pub mod app {
     use crate::integration;
     use crate::orchestrator;
@@ -59,7 +155,8 @@ pub mod app {
                 self.quit();
             }
 
-            // Toggle white noise with '9' key
+            // Toggle white noise with '9' key (native only)
+            #[cfg(not(target_arch = "wasm32"))]
             if input.key_pressed(KeyCode::Digit9) {
                 let enabled = !crate::audio::audio_playback::is_white_noise_enabled();
                 crate::audio::audio_playback::set_white_noise_enabled(enabled);
