@@ -70,37 +70,25 @@ impl Sorthos {
         ui.label("Below is a list of how to and where sorting algorithms are used:");
 
         ui.separator();
-        ui.label("Production-Grade Algorithms");
         ui.label("- Timsort: O(n log n) worst case, O(n) best case (adaptive), Stable");
         ui.label("- Heapsort: O(n log n) all cases, Unstable");
         ui.label("- Merge Sort: O(n log n) all cases, Stable");
         ui.label("- Quicksort: O(n log n) average, O(n²) worst case, Unstable");
 
         ui.separator();
-        ui.label("Efficient Specialized Algorithms");
         ui.label("- Counting Sort: O(n + k), Stable");
         ui.label("- Radix Sort: O(d × (n + k)), Stable");
         ui.label("- Shell Sort: O(n^1.25) to O(n^1.5), Unstable");
 
         ui.separator();
-        ui.label("Advanced Research Algorithms");
-
-        ui.separator();
-        ui.label("Educational Algorithms");
         ui.label("- Bubble Sort: O(n²) average and worst case, O(n) best case (adaptive), Stable");
-        ui.label(
-            "- Insertion Sort: O(n²) average and worst case, O(n) best case (adaptive), Stable",
-        );
+        ui.label("- Insertion Sort: O(n²) average and worst case, O(n) best case (adaptive), Stable",);
         ui.label("- Selection Sort: O(n²) all cases, Unstable");
         ui.label("- Cocktail Sort: O(n²) average and worst case, Stable");
         ui.label("- Gnome Sort: O(n²) worst case, O(n) best case, Stable");
 
         ui.separator();
-        ui.label("Specialized and Novelty Algorithms");
-
-        ui.separator();
-        ui.label("Probabilistic Algorithms");
-        ui.label("- Bogo Sort: O((n+1)!) worst case, O(n) best case, Not guaranteed to terminate");
+        ui.label("- Bogo Sort: O((n+1)!) worst case, O(n) best case, Not guaranteed to finish, but there is a universe where it is the fastest");
     }
 
     fn show_duck_page(&mut self, ui: &mut egui::Ui) {
