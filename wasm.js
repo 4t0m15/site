@@ -2,8 +2,6 @@ async function init() {
   const out = document.getElementById('out');
   out.textContent = 'Loading WASM...';
 
-
-  // IMPORTANT: This must be served over HTTP so the browser can fetch hello_world.wasm
   const resp = await fetch('./hello_world.wasm');
   const { instance } = await WebAssembly.instantiateStreaming(resp);
 
