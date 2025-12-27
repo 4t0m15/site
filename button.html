@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>button (wasm)</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      #counter-btn {
+        padding: 1rem 2rem;
+        font-size: 1.25rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="counter-btn">Loading...</button>
+    <script type="module" src="./counter.js"></script>
+  </body>
+</html>
+
