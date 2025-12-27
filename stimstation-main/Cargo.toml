@@ -45,6 +45,7 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1"
 getrandom = { version = "0.2", features = ["js"] }
+js-sys = "0.3"
 web-sys = { version = "0.3", features = [
     "Window",
     "Document",
@@ -54,6 +55,24 @@ web-sys = { version = "0.3", features = [
     "ImageData",
     "Performance",
     "console",
+    # Web Audio API
+    "AudioContext",
+    "AudioContextState",
+    "AnalyserNode",
+    "MediaDevices",
+    "MediaStream",
+    "MediaStreamConstraints",
+    "MediaStreamAudioSourceNode",
+    "MediaElementAudioSourceNode",
+    "Navigator",
+    "GainNode",
+    "OscillatorNode",
+    "OscillatorType",
+    "AudioDestinationNode",
+    "AudioNode",
+    "AudioParam",
+    "HtmlMediaElement",
+    "HtmlAudioElement",
 ] }
 
 [features]

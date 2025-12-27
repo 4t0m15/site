@@ -16,36 +16,66 @@
         width: 100vw;
         height: 100vh;
       }
-      #loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-family: Arial, sans-serif;
-        font-size: 18px;
+      #file-input {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <div id="loading">Loading StimStation...</div>
     <canvas id="stimstation_canvas"></canvas>
+    <input type="file" id="file-input" accept="audio/*" />
+    <audio id="audio-player" loop></audio>
+    
     <script type="module">
-      import init, { run_app } from './stimstation/stimstation.js';
+      import init, { run_app, init_audio_from_element, resume_audio } from './stimstation/stimstation.js?v=2';
       
       async function run() {
         try {
           await init();
           await run_app();
-          document.getElementById('loading').style.display = 'none';
+          
+          // Click anywhere to select file
+          document.body.addEventListener('click', selectFile, { once: true });
+          
         } catch (e) {
           console.error('Failed to load StimStation:', e);
-          document.getElementById('loading').textContent = 'Error loading StimStation. Check console for details.';
         }
       }
+      
+      function selectFile() {
+        document.getElementById('file-input').click();
+      }
+      
+      // File input handler
+      document.getElementById('file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          // Re-add click listener if no file selected
+          document.body.addEventListener('click', selectFile, { once: true });
+          return;
+        }
+        
+        const audioPlayer = document.getElementById('audio-player');
+        
+        try {
+          // Create object URL for the audio file
+          const url = URL.createObjectURL(file);
+          audioPlayer.src = url;
+          
+          // Initialize audio from the audio element
+          init_audio_from_element('audio-player');
+          
+          // Play and resume audio context
+          audioPlayer.play();
+          resume_audio();
+          
+        } catch (e) {
+          console.error('Failed to initialize audio:', e);
+          document.body.addEventListener('click', selectFile, { once: true });
+        }
+      });
       
       run();
     </script>
   </body>
 </html>
-

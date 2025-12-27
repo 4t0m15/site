@@ -1,6 +1,8 @@
 pub mod algorithms;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod audio;
+#[cfg(target_arch = "wasm32")]
+pub mod web_audio;
 pub mod core;
 pub mod graphics;
 pub mod physics;
@@ -61,6 +63,9 @@ pub async fn run_app() -> Result<(), JsValue> {
         let window = web_sys::window().unwrap();
         let current_time = window.performance().unwrap().now();
         let elapsed = ((current_time - start_time) / 1000.0) as f32;
+        
+        // Update audio spectrum before drawing
+        web_audio::update_audio_spectrum();
         
         // Draw frame
         {

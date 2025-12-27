@@ -3,6 +3,8 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::audio::audio_handler::get_audio_spectrum;
+#[cfg(target_arch = "wasm32")]
+use crate::web_audio;
 use crate::graphics::render::draw_filled_circle;
 
 /// Holds the positions and velocities of both balls.
@@ -273,52 +275,23 @@ fn draw_ball_with_effects(
 
     // Get audio data for scaling - much more expressive scaling
     let mut audio_scale: f32 = 1.0;
+    
+    // Native audio handling
     #[cfg(not(target_arch = "wasm32"))]
     if let Some(spectrum) = get_audio_spectrum() {
         if let Ok(data) = spectrum.lock() {
             if !data.is_empty() {
-                // Use different frequency ranges for each ball - swapped frequency ranges
-                let audio_value: f32 = if is_yellow {
-                    // Yellow ball responds to high frequencies (last quarter of spectrum)
-                    let start = (data.len() * 3) / 4;
-                    let end = data.len();
-                    let mut high_avg: f32 = 0.0;
-                    for i in start..end {
-                        high_avg += data[i];
-                    }
-                    high_avg / (end - start) as f32
-                } else {
-                    // Green ball responds to bass frequencies (first quarter of spectrum)
-                    let bass_range = data.len() / 4;
-                    let mut bass_avg: f32 = 0.0;
-                    for i in 0..bass_range {
-                        bass_avg += data[i];
-                    }
-                    bass_avg / bass_range as f32
-                };
-
-                if is_yellow {
-                    // Yellow ball: 10x more expressive scaling (normal level)
-                    let enhanced_audio = audio_value.powf(0.5); // Square root for smoother scaling
-                    audio_scale = 0.2 + enhanced_audio * 4.8; // Range: 0.2 to 5.0
-                                                              // Add some dynamic pulsing based on audio peaks
-                    let pulse_factor = (audio_value * 10.0).sin() * 0.3 + 1.0;
-                    audio_scale *= pulse_factor;
-
-                    // Remove size cap to allow unlimited ball growth
-                    audio_scale = audio_scale.max(0.1);
-                } else {
-                    // Green ball: 100x more responsive but much smaller (extreme responsiveness, compact size)
-                    let enhanced_audio = audio_value.powf(0.3); // Cube root for even more dramatic response
-                    audio_scale = 0.3 + enhanced_audio * 2.7; // Range: 0.3 to 3.0 (much smaller range but same responsiveness)
-                                                              // Add much more intense dynamic pulsing
-                    let pulse_factor = (audio_value * 20.0).sin() * 0.8 + 1.0; // More intense pulsing
-                    audio_scale *= pulse_factor;
-
-                    // Remove size cap to allow unlimited ball growth
-                    audio_scale = audio_scale.max(0.1);
-                }
+                audio_scale = calculate_audio_scale(&data, is_yellow);
             }
+        }
+    }
+    
+    // WASM audio handling
+    #[cfg(target_arch = "wasm32")]
+    if web_audio::is_audio_enabled() {
+        let data = web_audio::get_audio_spectrum();
+        if !data.is_empty() {
+            audio_scale = calculate_audio_scale(&data, is_yellow);
         }
     }
 
@@ -365,4 +338,54 @@ pub fn teleport_green(x: f32, y: f32) {
     unsafe {
         BALL_STATE.as_mut().unwrap().green_pos = Some((x, y));
     }
+}
+
+/// Calculate audio scale based on spectrum data
+/// Yellow ball responds to high frequencies, green ball responds to bass
+fn calculate_audio_scale(data: &[f32], is_yellow: bool) -> f32 {
+    // Use different frequency ranges for each ball
+    let audio_value: f32 = if is_yellow {
+        // Yellow ball responds to high frequencies (last quarter of spectrum)
+        let start = (data.len() * 3) / 4;
+        let end = data.len();
+        let mut high_avg: f32 = 0.0;
+        for i in start..end {
+            high_avg += data[i];
+        }
+        if end > start {
+            high_avg / (end - start) as f32
+        } else {
+            0.0
+        }
+    } else {
+        // Green ball responds to bass frequencies (first quarter of spectrum)
+        let bass_range = data.len() / 4;
+        let mut bass_avg: f32 = 0.0;
+        for i in 0..bass_range {
+            bass_avg += data[i];
+        }
+        if bass_range > 0 {
+            bass_avg / bass_range as f32
+        } else {
+            0.0
+        }
+    };
+
+    let audio_scale = if is_yellow {
+        // Yellow ball: 10x more expressive scaling
+        let enhanced_audio = audio_value.powf(0.5);
+        let mut scale = 0.2 + enhanced_audio * 4.8;
+        let pulse_factor = (audio_value * 10.0).sin() * 0.3 + 1.0;
+        scale *= pulse_factor;
+        scale.max(0.1)
+    } else {
+        // Green ball: more responsive with smaller range
+        let enhanced_audio = audio_value.powf(0.3);
+        let mut scale = 0.3 + enhanced_audio * 2.7;
+        let pulse_factor = (audio_value * 20.0).sin() * 0.8 + 1.0;
+        scale *= pulse_factor;
+        scale.max(0.1)
+    };
+
+    audio_scale
 }
