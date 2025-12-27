@@ -50,9 +50,9 @@ fn merge_visual(
     right: usize,
     tx: &mpsc::Sender<Operation>,
 ) {
-    // Create temporary arrays for left and right subarrays
-    let left_arr: Vec<usize> = bars[left..=mid].iter().map(|b| b.value).collect();
-    let right_arr: Vec<usize> = bars[mid + 1..=right].iter().map(|b| b.value).collect();
+    // Create temporary arrays for left and right subarrays (store full SortBar objects)
+    let left_arr: Vec<SortBar> = bars[left..=mid].to_vec();
+    let right_arr: Vec<SortBar> = bars[mid + 1..=right].to_vec();
 
     let left_size = left_arr.len();
     let right_size = right_arr.len();
@@ -79,15 +79,17 @@ fn merge_visual(
         let _ = tx.send(Operation::Compare(left_idx, right_idx));
         thread::sleep(Duration::from_millis(80));
 
-        if left_arr[i] <= right_arr[j] {
-            // Take from left array
+        if left_arr[i].value <= right_arr[j].value {
+            // Take from left array - update local bars AND send to visualization
+            bars[k] = left_arr[i].clone();
+            let _ = tx.send(Operation::Overwrite(k, left_arr[i].clone()));
             let _ = tx.send(Operation::SetColor(k, Color32::LIGHT_GREEN));
-            bars[k].value = left_arr[i];
             i += 1;
         } else {
-            // Take from right array
+            // Take from right array - update local bars AND send to visualization
+            bars[k] = right_arr[j].clone();
+            let _ = tx.send(Operation::Overwrite(k, right_arr[j].clone()));
             let _ = tx.send(Operation::SetColor(k, Color32::LIGHT_YELLOW));
-            bars[k].value = right_arr[j];
             j += 1;
         }
 
@@ -97,8 +99,9 @@ fn merge_visual(
 
     // Copy remaining elements from left array
     while i < left_size {
+        bars[k] = left_arr[i].clone();
+        let _ = tx.send(Operation::Overwrite(k, left_arr[i].clone()));
         let _ = tx.send(Operation::SetColor(k, Color32::LIGHT_GREEN));
-        bars[k].value = left_arr[i];
         thread::sleep(Duration::from_millis(40));
         i += 1;
         k += 1;
@@ -106,8 +109,9 @@ fn merge_visual(
 
     // Copy remaining elements from right array
     while j < right_size {
+        bars[k] = right_arr[j].clone();
+        let _ = tx.send(Operation::Overwrite(k, right_arr[j].clone()));
         let _ = tx.send(Operation::SetColor(k, Color32::LIGHT_YELLOW));
-        bars[k].value = right_arr[j];
         thread::sleep(Duration::from_millis(40));
         j += 1;
         k += 1;
